@@ -1,22 +1,3 @@
-'''
-0행 :  코
-1행 : 오른쪽 눈
-2행 : 왼쪽 눈
-3행 : 오른쪽 귀
-4행 : 왼쪽 귀
-5행 : 오른쪽 어깨
-6행 : 왼쪽 어깨
-7행 : 오른쪽 팔꿈치
-8행 : 왼쪽 팔꿈치
-9행 : 오른쪽 손목
-10행 : 왼쪽 손목
-11행 : 오른쪽 골반
-12행 : 왼쪽 골반
-13행 : 오른쪽 무릎
-14행 : 왼쪽 무릎
-15행 : 오른쪽 발
-16행 : 왼쪽 발
-'''
 import torch
 import cv2
 import pandas as pd
@@ -24,8 +5,8 @@ import pandas as pd
 from ultralytics import YOLO
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-VIDEO_PATH = r"C:\Users\macaron\Desktop\VISION LAB\낙상사고.mp4"
-OUTPUT_PATH = r"C:\Users\macaron\Desktop\VISION LAB\output.mp4"
+VIDEO_PATH = r"C:\Users\macaron\Desktop\VISION_LAB\홍성민_작업폴더\DonggukGraduated\낙상사고.mp4"
+OUTPUT_PATH = r"C:\Users\macaron\Desktop\VISION_LAB\홍성민_작업폴더\DonggukGraduated\output.mp4"
 
 cap = cv2.VideoCapture(VIDEO_PATH)
 if not cap.isOpened():
@@ -101,7 +82,6 @@ while cap.isOpened():
     boxes = results[0].boxes.cpu().numpy().data
     keypoints = results[0].keypoints
     keypoints_info = keypoints.xy[0].data.cpu().numpy().flatten()
-    print(keypoints_info.shape)
 
     if len(boxes) != 0:
         # BBox
@@ -115,18 +95,15 @@ while cap.isOpened():
             elif len(box) == 7:
                 left, top, right, bottom, conf, label_name = bbox_info(results, box)
 
-        # KeyPoints
-        values_each_keypoint_info = []
-        for value in keypoints_info:
-            values_each_keypoint_info.append(value)
-        
-        print(values_each_keypoint_info)
-        
-    annotated_frame = results[0].plot()
+        # 관절 정보를 DataFrame에 추가
+        row = [frame_number]
+        row.extend(keypoints_info.tolist())
+        df.loc[len(df)] = row
 
+    annotated_frame = results[0].plot()
     annotated_frame = cv2.resize(annotated_frame, dsize=(640, 480))
-    # out.write(annotated_frame)
     cv2.imshow('YOLO Pose Detection', annotated_frame)
+    out.write(annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         print('='*20)
